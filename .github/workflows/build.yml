@@ -53,6 +53,11 @@ jobs:
       - name: Install libdav1d
         run: brew install dav1d || true
 
+      # What the pinned framework release still gets wrong, fixed in the checkout
+      # before it is packed into the app (see ci/patch-framework.php).
+      - name: Patch the framework
+        run: php ci/patch-framework.php ../myphp
+
       - name: Build
         run: php -d ffi.enable=1 ../myphp/bin/myphp build -platform darwin/arm64,darwin/amd64
 
@@ -82,6 +87,11 @@ jobs:
           extensions: ffi, mbstring, ctype, curl, openssl, dom, xml, xmlreader, xmlwriter, simplexml, sockets, zip, intl, fileinfo, tokenizer, phar, zlib, filter
           ini-values: ffi.enable=1
           coverage: none
+
+      # What the pinned framework release still gets wrong, fixed in the checkout
+      # before it is packed into the app (see ci/patch-framework.php).
+      - name: Patch the framework
+        run: php ci/patch-framework.php ../myphp
 
       - name: Build
         run: php -d ffi.enable=1 ../myphp/bin/myphp build -platform linux/amd64,linux/arm64
@@ -148,6 +158,11 @@ jobs:
         run: |
           php -v
           php -m
+
+      # What the pinned framework release still gets wrong, fixed in the checkout
+      # before it is packed into the app (see ci/patch-framework.php).
+      - name: Patch the framework
+        run: php ci/patch-framework.php ../myphp
 
       - name: Build
         shell: pwsh

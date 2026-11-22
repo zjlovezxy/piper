@@ -9,7 +9,10 @@ if (class_exists(\MyPHP\App::class)) {
 }
 $framework = is_dir(__DIR__ . '/myphp') ? __DIR__ . '/myphp'
     : (getenv('MYPHP_HOME') ?: json_decode((string)file_get_contents(__DIR__ . '/myphp.json'), true)['framework']);
-if (preg_match('#^(/|[A-Za-z]:[\\\\/])#', $framework) !== 1) {
+// ./myphp is a phar:// URL in a built app, which is already absolute: taking it
+// for the relative path myphp.json names doubled the prefix and the app died on
+// its first require, on every platform.
+if (!str_starts_with($framework, 'phar://') && preg_match('#^(/|[A-Za-z]:[\\\\/])#', $framework) !== 1) {
     $framework = __DIR__ . '/' . $framework;
 }
 require $framework . '/src/autoload.php';

@@ -34,13 +34,13 @@ myphp build -d macos
 
 ## 自动构建与下载 (CI)
 
-本仓库用 GitHub Actions 编译三端（产物版本取自 `myphp.json`，下例为 `1.0.0`）：
+本仓库用 GitHub Actions 编译三端（产物版本取自 `myphp.json`，下例为 `1.0.1`）：
 
 | 平台 | 产物 |
 |---|---|
-| macOS（arm64 / amd64） | `Piper 1.0.0 arm64.dmg`、`Piper 1.0.0 amd64.dmg`（ad hoc 签名） |
-| Linux（amd64 / arm64） | `piper_1.0.0_amd64.deb`、`piper_1.0.0_arm64.deb`、`piper-1.0.0-linux-<arch>.tar.gz`、`PKGBUILD`，以及静态单文件 `piper`、`.desktop` 与图标 |
-| Windows（amd64） | `piper-setup-1.0.0-amd64.exe`（NSIS 安装包）、`piper-1.0.0-windows-amd64.zip`（绿色版） |
+| macOS（arm64 / amd64） | `Piper 1.0.1 arm64.dmg`、`Piper 1.0.1 amd64.dmg`（ad hoc 签名） |
+| Linux（amd64 / arm64） | `piper_1.0.1_amd64.deb`、`piper_1.0.1_arm64.deb`、`piper-1.0.1-linux-<arch>.tar.gz`、`PKGBUILD`，以及静态单文件 `piper`、`.desktop` 与图标 |
+| Windows（amd64） | `piper-setup-1.0.1-amd64.exe`（NSIS 安装包）、`piper-1.0.1-windows-amd64.zip`（绿色版） |
 
 - 推到 `main` 或提 PR：自动编译三端，产物在 `Actions` → `Build` 该次运行的 Artifacts 里。
 - 发布版本：打标签即可自动编译并创建 Release、上传全部安装包：
