@@ -1,0 +1,195 @@
+name: Build
+
+# Builds the app on macOS, Linux and Windows with the MyPHP framework, and, on
+# a tag v*, publishes what each runner made as a GitHub release.
+#
+# The app builds with the `myphp` CLI of the framework checkout named in
+# myphp.json ("framework": "../myphp"), so every runner clones the framework
+# next to the app: <workspace>/../myphp.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The framework the app is built against: a release tag (bin/myphp), or a
+  # commit on main. Bump it when the app needs a newer framework.
+  MYPHP_REPO: owner888/myphp
+  MYPHP_REF: v1.203.11
+  PHP_VERSION: '8.4'
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # darwin/arm64 and darwin/amd64: IINA.app and a .dmg of each, signed ad hoc.
+  # macOS apps are made on macOS only (hdiutil, ditto, codesign).
+  macos:
+    name: macOS (arm64, amd64)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get the MyPHP framework
+        run: git clone --depth 1 --branch "$MYPHP_REF" "https://github.com/$MYPHP_REPO.git" ../myphp
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ffi, mbstring, ctype, curl, openssl, dom, xml, xmlreader, xmlwriter, simplexml, sockets, zip, intl, fileinfo, tokenizer, phar, zlib, filter
+          ini-values: ffi.enable=1
+          coverage: none
+
+      # The player decodes AV1 with libdav1d where the system has no decoder;
+      # `myphp build` copies it out of this Mac's Homebrew into the app.
+      - name: Install libdav1d
+        run: brew install dav1d || true
+
+      - name: Build
+        run: php -d ffi.enable=1 ../myphp/bin/myphp build -platform darwin/arm64,darwin/amd64
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: build/darwin-*
+          if-no-files-found: error
+
+  # linux/amd64 and linux/arm64: the app as one static PHP binary, its
+  # .desktop entry and icon, .tar.gz, .deb and PKGBUILD.
+  linux:
+    name: Linux (amd64, arm64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get the MyPHP framework
+        run: git clone --depth 1 --branch "$MYPHP_REF" "https://github.com/$MYPHP_REPO.git" ../myphp
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ffi, mbstring, ctype, curl, openssl, dom, xml, xmlreader, xmlwriter, simplexml, sockets, zip, intl, fileinfo, tokenizer, phar, zlib, filter
+          ini-values: ffi.enable=1
+          coverage: none
+
+      - name: Build
+        run: php -d ffi.enable=1 ../myphp/bin/myphp build -platform linux/amd64,linux/arm64
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: build/linux-*
+          if-no-files-found: error
+
+  # windows/amd64: the app's folder with the PHP that builds it (Windows has
+  # no package to depend on), the NSIS installer, the .zip and SHA256SUMS.
+  windows:
+    name: Windows (amd64)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get the MyPHP framework
+        shell: pwsh
+        run: git clone --depth 1 --branch "$env:MYPHP_REF" "https://github.com/$env:MYPHP_REPO.git" ../myphp
+
+      # PHP's official x64 NTS build, with the extensions MyPHP calls: a
+      # Windows app carries the PHP that builds it, its extensions and DLLs.
+      - name: Install PHP
+        shell: pwsh
+        run: |
+          $releases = Invoke-RestMethod https://windows.php.net/downloads/releases/releases.json
+          $build = $releases.'8.4'.PSObject.Properties | Where-Object { $_.Name -match '^nts-vs\d+-x64$' } | Select-Object -First 1
+          $zip = $build.Value.zip.path
+          Write-Host "PHP $($releases.'8.4'.version): $zip"
+          Invoke-WebRequest "https://windows.php.net/downloads/releases/$zip" -OutFile "$env:RUNNER_TEMP\php.zip"
+          Expand-Archive "$env:RUNNER_TEMP\php.zip" -DestinationPath C:\myphp-php
+          Set-Content C:\myphp-php\php.ini @(
+            'extension_dir="C:\myphp-php\ext"',
+            'extension=ffi', 'extension=mbstring', 'extension=intl', 'extension=curl', 'extension=openssl', 'extension=sodium', 'extension=sockets', 'extension=fileinfo', 'extension=zip',
+            'ffi.enable=1', 'memory_limit=-1'
+          )
+          "C:\myphp-php" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      # FFmpeg 7's shared DLLs, which the player decodes with (Native\Av):
+      # `myphp build` copies them beside php.exe of the app.
+      - name: Install FFmpeg
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/GyanD/codexffmpeg/releases/download/7.1.1/ffmpeg-7.1.1-full_build-shared.zip -OutFile "$env:RUNNER_TEMP\ffmpeg.zip"
+          Expand-Archive "$env:RUNNER_TEMP\ffmpeg.zip" -DestinationPath C:\myphp-ffmpeg
+          $bin = (Get-ChildItem C:\myphp-ffmpeg -Recurse -Filter avcodec-61.dll | Select-Object -First 1).DirectoryName
+          Write-Host "FFmpeg's DLLs: $bin"
+          $bin | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Install NSIS (the installer)
+        shell: pwsh
+        run: choco install nsis -y --no-progress
+
+      # C compiler of the launcher (.exe): MSVC's cl, which the runner has.
+      - name: Use MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Check PHP
+        shell: pwsh
+        run: |
+          php -v
+          php -m
+
+      - name: Build
+        shell: pwsh
+        run: php -d ffi.enable=1 ../myphp/bin/myphp build -platform windows/amd64
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/windows-*
+          if-no-files-found: error
+
+  # A tag v1.2.3 (say `git tag v1.2.3 && git push origin v1.2.3`) publishes
+  # what the three runners made as the GitHub release of that tag.
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          files=()
+          while IFS= read -r f; do files+=("$f"); done < <(find artifacts -type f \
+            \( -name '*.dmg' -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.zip' \
+               -o -name '*.exe' -o -name 'SHA256SUMS' -o -name 'PKGBUILD' \) | sort)
+          printf 'assets:\n'; printf '  %s\n' "${files[@]}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            flags=()
+            [[ "$tag" == *-* ]] && flags+=(--prerelease)
+            gh release create "$tag" "${files[@]}" --verify-tag --generate-notes \
+              --title "IINA ${tag#v}" "${flags[@]}"
+          fi
