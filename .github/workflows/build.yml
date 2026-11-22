@@ -183,7 +183,7 @@ jobs:
           files=()
           while IFS= read -r f; do files+=("$f"); done < <(find artifacts -type f \
             \( -name '*.dmg' -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.zip' \
-               -o -name '*.exe' -o -name 'SHA256SUMS' -o -name 'PKGBUILD' \) | sort)
+               -o -name '*-setup-*.exe' -o -name 'SHA256SUMS' -o -name 'PKGBUILD' \) | sort)
           printf 'assets:\n'; printf '  %s\n' "${files[@]}"
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber
