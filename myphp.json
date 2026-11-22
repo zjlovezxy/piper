@@ -1,8 +1,8 @@
 {
-    "name": "IINA",
-    "displayName": "IINA Media Player (MyPHP)",
-    "description": "对标 macOS IINA 的全功能现代原生音视频播放器：硬件解码、10-bit HDR、libass 级 ASS 特效字幕、Liquid Glass 悬浮控制栏、画中画与插件商店。",
-    "identifier": "com.owner888.iina",
+    "name": "Piper",
+    "displayName": "Piper Media Player (MyPHP)",
+    "description": "Piper：对标 macOS IINA 的全功能现代原生音视频播放器：硬件解码、10-bit HDR、libass 级 ASS 特效字幕、Liquid Glass 悬浮控制栏、画中画与插件商店。",
+    "identifier": "com.zjlovezxy.piper",
     "version": "1.0.0",
     "entry": "app.php",
     "out": "build",

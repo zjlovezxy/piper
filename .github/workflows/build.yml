@@ -204,5 +204,5 @@ jobs:
             flags=()
             [[ "$tag" == *-* ]] && flags+=(--prerelease)
             gh release create "$tag" release/* -R "$GITHUB_REPOSITORY" --verify-tag \
-              --generate-notes --title "IINA ${tag#v}" "${flags[@]}"
+              --generate-notes --title "Piper ${tag#v}" "${flags[@]}"
           fi

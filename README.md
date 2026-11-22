@@ -1,10 +1,12 @@
-# IINA Media Player (MyPHP)
+# Piper Media Player (MyPHP)
 
-对标 macOS [IINA](https://iina.io) 的现代全功能原生音视频播放器，基于 [MyPHP](https://github.com/owner888/myphp) 构建。
+Piper 是对标 macOS [IINA](https://iina.io) 的现代全功能原生音视频播放器，基于 [MyPHP](https://github.com/owner888/myphp) 构建。
 
-A modern, hardware-accelerated media player modeled after IINA, built in pure PHP 8.4+ / 8.5 with [MyPHP](https://github.com/owner888/myphp).
+本仓库源自 [owner888/iina](https://github.com/owner888/iina)（上游作者 @owner888），重命名为 **Piper** 并加入 macOS / Linux / Windows 三端 CI 构建。
 
-![IINA Media Player Screenshot](screenshot.jpg)
+Piper is a modern, hardware-accelerated media player modeled after IINA, built in pure PHP 8.4+ / 8.5 with [MyPHP](https://github.com/owner888/myphp).
+
+![Piper Media Player Screenshot](screenshot.jpg)
 
 ## 特性 (Features)
 
@@ -36,9 +38,9 @@ myphp build -d macos
 
 | 平台 | 产物 |
 |---|---|
-| macOS（arm64 / amd64） | `IINA 1.0.0 arm64.dmg`、`IINA 1.0.0 amd64.dmg`（ad hoc 签名） |
-| Linux（amd64 / arm64） | `iina_1.0.0_amd64.deb`、`iina_1.0.0_arm64.deb`、`iina-1.0.0-linux-<arch>.tar.gz`、`PKGBUILD`，以及静态单文件 `iina`、`.desktop` 与图标 |
-| Windows（amd64） | `iina-setup-1.0.0-amd64.exe`（NSIS 安装包）、`iina-1.0.0-windows-amd64.zip`（绿色版） |
+| macOS（arm64 / amd64） | `Piper 1.0.0 arm64.dmg`、`Piper 1.0.0 amd64.dmg`（ad hoc 签名） |
+| Linux（amd64 / arm64） | `piper_1.0.0_amd64.deb`、`piper_1.0.0_arm64.deb`、`piper-1.0.0-linux-<arch>.tar.gz`、`PKGBUILD`，以及静态单文件 `piper`、`.desktop` 与图标 |
+| Windows（amd64） | `piper-setup-1.0.0-amd64.exe`（NSIS 安装包）、`piper-1.0.0-windows-amd64.zip`（绿色版） |
 
 - 推到 `main` 或提 PR：自动编译三端，产物在 `Actions` → `Build` 该次运行的 Artifacts 里。
 - 发布版本：打标签即可自动编译并创建 Release、上传全部安装包：
@@ -48,7 +50,7 @@ myphp build -d macos
   ```
 
 - 构建用的框架是 `owner888/myphp`，版本由 `.github/workflows/build.yml` 的 `MYPHP_REF` 指定（当前 `v1.203.11`）；需要跟随框架升级时改这一个值。
-- 未做代码签名/公证：macOS 首次打开需右键“打开”（或 `xattr -dr com.apple.quarantine /Applications/IINA.app`），Windows 安装包会触发 SmartScreen 提示。
+- 未做代码签名/公证：macOS 首次打开需右键“打开”（或 `xattr -dr com.apple.quarantine /Applications/Piper.app`），Windows 安装包会触发 SmartScreen 提示。
 
 ## 测试 (Test)
 

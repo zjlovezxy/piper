@@ -380,7 +380,7 @@ final class Players
     }
 }
 
-App::setName('IINA');
+App::setName('Piper');
 // The updates of the built app (myphp.json's "updates"), checked as Settings > General's Check for Updates says, every interval it says
 // (from the next launch: the updater takes it as it starts).
 $set = PlayerSettings::default();
