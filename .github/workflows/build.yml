@@ -174,22 +174,35 @@ jobs:
         with:
           path: artifacts
 
+      # The assets of the release, one of each name: the two PKGBUILDs, and
+      # the Windows SHA256SUMS, named after their platform.
+      - name: Collect the assets
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          find artifacts -type f \
+            \( -name '*.dmg' -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.zip' \
+               -o -name '*-setup-*.exe' \) -exec cp {} release/ \;
+          while IFS= read -r f; do
+            arch="$(basename "$(dirname "$f")")"
+            cp "$f" "release/PKGBUILD-${arch#linux-}"
+          done < <(find artifacts -name PKGBUILD)
+          if [ -f artifacts/windows/windows-amd64/SHA256SUMS ]; then
+            cp artifacts/windows/windows-amd64/SHA256SUMS release/SHA256SUMS-windows
+          fi
+          ls -l release
+
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
-          files=()
-          while IFS= read -r f; do files+=("$f"); done < <(find artifacts -type f \
-            \( -name '*.dmg' -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.zip' \
-               -o -name '*-setup-*.exe' -o -name 'SHA256SUMS' -o -name 'PKGBUILD' \) | sort)
-          printf 'assets:\n'; printf '  %s\n' "${files[@]}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "${files[@]}" --clobber
+          if gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" release/* -R "$GITHUB_REPOSITORY" --clobber
           else
             flags=()
             [[ "$tag" == *-* ]] && flags+=(--prerelease)
-            gh release create "$tag" "${files[@]}" --verify-tag --generate-notes \
-              --title "IINA ${tag#v}" "${flags[@]}"
+            gh release create "$tag" release/* -R "$GITHUB_REPOSITORY" --verify-tag \
+              --generate-notes --title "IINA ${tag#v}" "${flags[@]}"
           fi
